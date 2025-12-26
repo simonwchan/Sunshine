@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunshine - Daily Overview</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>☀️ Sunshine</h1>
+            <p>Your Daily Overview</p>
+        </header>
+        
+        <main>
+            <section class="news-section">
+                <h2>Top 5 News Stories</h2>
+                <div id="news-container" class="news-grid">
+                    <div class="loading">Loading news...</div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>Last updated: <span id="timestamp"></span></p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
