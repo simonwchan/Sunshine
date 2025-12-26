@@ -28,9 +28,9 @@ class NewsAggregator:
     
     def get_summary_from_gemini(self, title, content):
         """Generate a summary using Gemini API"""
-        # If mock mode enabled, generate a local mock summary and avoid external calls
+        # If mock mode enabled, return a simple boilerplate placeholder and avoid external calls
         if MOCK_SUMMARY:
-            return self.generate_mock_summary(title, content, target_words=1000)
+            return "MOCK SUMMARY: This is placeholder summary content generated in mock mode. Replace with real generated summary when mock mode is disabled."
         if not GEMINI_API_KEY:
             # Fallback if API key not set: return up to ~8000 chars (~1000 words)
             return content[:8000] + "..." if len(content) > 8000 else content

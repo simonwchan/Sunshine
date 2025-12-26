@@ -27,7 +27,7 @@ def home():
     summary = news.get('summary') if isinstance(news, dict) else ''
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     # Title changes when running in mock mode
-    app_title = 'Sunshine Mock' if os.getenv('MOCK_SUMMARY', '').lower() in ('1', 'true', 'yes') else '☀️ Sunshine'
+    app_title = 'Sunshine MOCK' if os.getenv('MOCK_SUMMARY', '').lower() in ('1', 'true', 'yes') else '☀️ Sunshine'
     return render_template('index.html', stories=stories, summary=summary, timestamp=timestamp, app_title=app_title)
 
 @app.route('/api/news')
