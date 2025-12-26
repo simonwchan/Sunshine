@@ -10,8 +10,7 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# Mock summary mode (set MOCK_SUMMARY=1 or true to enable)
-MOCK_SUMMARY = os.getenv('MOCK_SUMMARY', '').lower() in ('1', 'true', 'yes')
+# (no mock mode) configure normally from environment
 
 class NewsAggregator:
     def __init__(self):
@@ -28,9 +27,7 @@ class NewsAggregator:
     
     def get_summary_from_gemini(self, title, content):
         """Generate a summary using Gemini API"""
-        # If mock mode enabled, return a simple boilerplate placeholder and avoid external calls
-        if MOCK_SUMMARY:
-            return "MOCK SUMMARY: This is placeholder summary content generated in mock mode. Replace with real generated summary when mock mode is disabled."
+        # No mock mode: attempt to call Gemini if key present, otherwise fallback
         if not GEMINI_API_KEY:
             # Fallback if API key not set: return up to ~8000 chars (~1000 words)
             return content[:8000] + "..." if len(content) > 8000 else content
@@ -52,70 +49,7 @@ Summary (about 1000 words):"""
             # Fallback to using the original content
             return content[:8000] + "..." if len(content) > 8000 else content
 
-    def generate_mock_summary(self, title, content, target_words=1000):
-        """Create a mock, human-readable summary approximately target_words long.
-
-        This avoids calling external APIs when MOCK_SUMMARY is enabled. The function
-        expands and restructures the provided content to produce a longer summary.
-        """
-        # Base pieces: title and content words
-        words = []
-        if title:
-            words.extend(title.split())
-        content_words = content.split()
-        # Use content as primary material; if short, repeat with transitions
-        if not content_words:
-            filler = (title or "News summary")
-            content_words = (filler + ' ') * 200
-
-        # Build paragraphs with gentle transitions until target reached
-        summary_words = []
-        para_count = 0
-        i = 0
-        while len(summary_words) < target_words:
-            para_count += 1
-            # Take a slice of content words
-            slice_len = min( max(80, target_words // 6), len(content_words) )
-            start = (i * slice_len) % len(content_words)
-            chunk = content_words[start:start+slice_len]
-            if not chunk:
-                chunk = content_words[:slice_len]
-
-            # Add a leading sentence for the paragraph
-            lead = []
-            if para_count == 1:
-                lead = [f"Overview: {title}."]
-            else:
-                lead = ["Further context:"]
-
-            para = ' '.join(lead + chunk)
-            # Ensure paragraph ends in a period
-            if not para.endswith('.'):
-                para = para.rstrip() + '.'
-
-            # Append paragraph words
-            summary_words.extend(para.split())
-            # Add a transition sentence occasionally
-            if len(summary_words) < target_words:
-                transition = "This development is significant because it highlights broader trends and implications in current affairs."
-                summary_words.extend(transition.split())
-
-            i += 1
-
-            # Safety: if we've looped too many times, break
-            if para_count > 20:
-                break
-
-        # Trim to target and join into paragraphs of ~120 words
-        summary_words = summary_words[:target_words]
-        # Build paragraphs
-        paras = []
-        w = summary_words
-        psize = 120
-        for j in range(0, len(w), psize):
-            paras.append(' '.join(w[j:j+psize]).strip())
-
-        return '\n\n'.join(paras)
+    
     
     def get_top_stories(self, limit=10):
         """Fetch top stories from multiple sources with max 2 per source"""
