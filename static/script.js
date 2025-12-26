@@ -37,6 +37,7 @@ function createNewsCard(story, index) {
             <span class="news-card-source">${story.source}</span>
         </div>
         <h3 class="news-card-title"><a href="${story.link}" target="_blank">${story.title}</a></h3>
+        <p class="news-card-summary">${story.summary}</p>
     `;
     
     return card;
