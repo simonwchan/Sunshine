@@ -6,21 +6,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function fetchNews() {
     const container = document.getElementById('news-container');
-    
     fetch('/api/news')
         .then(response => response.json())
         .then(data => {
             container.innerHTML = '';
-            
-            if (data.length === 0) {
+
+            // Support both old format (array) and new format ({stories, summary})
+            const stories = data.stories || data;
+            const combinedSummary = data.summary || '';
+
+            if (!stories || stories.length === 0) {
                 container.innerHTML = '<p class="loading">No news stories found</p>';
+                // still update summary box
+                const sumElEmpty = document.getElementById('combined-summary');
+                if (sumElEmpty) sumElEmpty.textContent = combinedSummary || 'No summary available.';
                 return;
             }
-            
-            data.forEach((story, index) => {
+
+            stories.forEach((story, index) => {
                 const card = createNewsCard(story, index + 1);
                 container.appendChild(card);
             });
+
+            // Render combined summary at the bottom
+            const summaryEl = document.getElementById('combined-summary');
+            if (summaryEl) summaryEl.textContent = combinedSummary || 'No summary available.';
         })
         .catch(error => {
             console.error('Error fetching news:', error);
@@ -33,11 +43,10 @@ function createNewsCard(story, index) {
     card.className = 'news-card';
     
     card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
             <span class="news-card-source">${story.source}</span>
         </div>
         <h3 class="news-card-title"><a href="${story.link}" target="_blank">${story.title}</a></h3>
-        <p class="news-card-summary">${story.summary}</p>
     `;
     
     return card;

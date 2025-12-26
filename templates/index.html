@@ -14,19 +14,33 @@
         </header>
         
         <main>
-            <section class="news-section">
-                <h2>Top 5 News Stories</h2>
                 <div id="news-container" class="news-grid">
+                    {% if stories and stories|length > 0 %}
+                        {% for story in stories[:5] %}
+                            <div class="news-card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                    <span class="news-card-source">{{ story.source }}</span>
+                                </div>
+                                <h3 class="news-card-title"><a href="{{ story.link }}" target="_blank">{{ story.title }}</a></h3>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="loading">No news stories found</p>
+                    {% endif %}
+                </div>
                     <div class="loading">Loading news...</div>
                 </div>
+                    <div id="combined-summary" class="summary-box">{{ summary or 'No summary available.' }}</div>
+                    <h2>Daily Summary</h2>
+                    <div id="combined-summary" class="summary-box">Loading summary...</div>
+                </section>
             </section>
         </main>
-        
+            <p>Last updated: <span id="timestamp">{{ timestamp }}</span></p>
         <footer>
             <p>Last updated: <span id="timestamp"></span></p>
-        </footer>
     </div>
     
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- Server-side rendered content — no JavaScript required -->
 </body>
 </html>
