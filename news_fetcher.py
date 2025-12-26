@@ -33,7 +33,7 @@ class NewsAggregator:
             return content[:8000] + "..." if len(content) > 8000 else content
         
         try:
-            model = genai.GenerativeModel('gemini-pro')
+            # Try a list of preferred model ids first (some SDKs expect different ids)
             prompt = f"""Summarize the following news article in approximately 1000 words (aim for a comprehensive, informative summary — roughly 3–6 paragraphs). Include key facts, relevant context, and explain the significance of the story. Use a clear, neutral tone.
 
 Title: {title}
@@ -41,9 +41,68 @@ Title: {title}
 Content: {content}
 
 Summary (about 1000 words):"""
-            
-            response = model.generate_content(prompt)
-            return response.text
+
+            preferred = [
+                'gemini-pro',
+                'models/gemini-pro',
+                'text-bison-001',
+                'models/text-bison-001',
+            ]
+
+            last_exc = None
+            for candidate in preferred:
+                try:
+                    model = genai.GenerativeModel(candidate)
+                    response = model.generate_content(prompt)
+                    # Some SDKs return a different structure
+                    if hasattr(response, 'text'):
+                        return response.text
+                    elif isinstance(response, dict) and 'text' in response:
+                        return response['text']
+                    elif hasattr(response, 'content'):
+                        return str(response.content)
+                except Exception as e:
+                    last_exc = e
+
+            # If the preferred list failed, try to discover available models (if supported)
+            list_models_fn = getattr(genai, 'list_models', None) or getattr(genai, 'get_models', None)
+            if callable(list_models_fn):
+                try:
+                    models = list_models_fn()
+                    # models may be a list or an object with items; try to iterate
+                    for m in models:
+                        # model id/name may be in different keys
+                        mid = None
+                        if isinstance(m, dict):
+                            mid = m.get('name') or m.get('id') or m.get('model')
+                        else:
+                            mid = getattr(m, 'name', None) or getattr(m, 'id', None)
+                        if not mid:
+                            continue
+                        # prefer bison/gemini/gpt-like models
+                        if any(tok in mid.lower() for tok in ('bison', 'gemini', 'gpt')):
+                            try:
+                                model = genai.GenerativeModel(mid)
+                                response = model.generate_content(prompt)
+                                if hasattr(response, 'text'):
+                                    return response.text
+                                elif isinstance(response, dict) and 'text' in response:
+                                    return response['text']
+                                elif hasattr(response, 'content'):
+                                    return str(response.content)
+                            except Exception:
+                                continue
+                except Exception as e:
+                    last_exc = e
+
+            # If we reach here, remote generation failed — log and fall back
+            if last_exc:
+                print(f"Error generating summary with Gemini (attempts failed): {last_exc}")
+            else:
+                print("Error generating summary with Gemini: unknown error")
+
+            # Final fallback: return a truncated combined text (up to ~8000 chars)
+            return content[:8000] + "..." if len(content) > 8000 else content
         except Exception as e:
             print(f"Error generating summary with Gemini: {str(e)}")
             # Fallback to using the original content
