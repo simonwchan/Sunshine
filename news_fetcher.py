@@ -7,7 +7,13 @@ class NewsAggregator:
     def __init__(self):
         self.sources = {
             'BBC': 'http://feeds.bbc.co.uk/news/rss.xml',
-            'CNN': 'http://rss.cnn.com/rss/cnn_topstories.rss'
+            'CNN': 'http://rss.cnn.com/rss/cnn_topstories.rss',
+            'Reuters': 'https://www.reutersagency.com/feed/?taxonomy=best-topics&output=rss',
+            'The Guardian': 'https://www.theguardian.com/world/rss',
+            'Al Jazeera': 'https://www.aljazeera.com/xml/rss/all.xml',
+            'DW': 'https://www.dw.com/en/xml/feed/rss/en',
+            'France24': 'https://www.france24.com/en/rss',
+            'BBC World': 'https://feeds.bbc.co.uk/news/world/rss.xml'
         }
     
     def get_top_stories(self, limit=5):
@@ -17,7 +23,7 @@ class NewsAggregator:
         for source_name, rss_url in self.sources.items():
             try:
                 feed = feedparser.parse(rss_url)
-                for entry in feed.entries[:limit]:
+                for entry in feed.entries[:5]:  # Get up to 5 per source
                     story = {
                         'title': entry.get('title', 'No title'),
                         'link': entry.get('link', '#'),
@@ -29,7 +35,7 @@ class NewsAggregator:
             except Exception as e:
                 print(f"Error fetching from {source_name}: {str(e)}")
         
-        # Sort by publication date and get top 5
+        # Sort by publication date and get top N
         try:
             all_stories = sorted(
                 all_stories, 
