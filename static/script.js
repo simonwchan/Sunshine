@@ -32,19 +32,11 @@ function createNewsCard(story, index) {
     const card = document.createElement('div');
     card.className = 'news-card';
     
-    const publishedDate = story.published 
-        ? new Date(story.published).toLocaleDateString() 
-        : 'Date unknown';
-    
     card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
             <span class="news-card-source">${story.source}</span>
-            <span style="font-weight: bold; color: #667eea;">#${index}</span>
         </div>
-        <h3 class="news-card-title">${story.title}</h3>
-        <p class="news-card-summary">${story.summary}</p>
-        <p class="news-card-published">${publishedDate}</p>
-        <a href="${story.link}" target="_blank" class="news-card-link">Read More →</a>
+        <h3 class="news-card-title"><a href="${story.link}" target="_blank">${story.title}</a></h3>
     `;
     
     return card;

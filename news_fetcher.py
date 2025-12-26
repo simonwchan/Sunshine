@@ -16,14 +16,14 @@ class NewsAggregator:
             'BBC World': 'https://feeds.bbc.co.uk/news/world/rss.xml'
         }
     
-    def get_top_stories(self, limit=5):
-        """Fetch top stories from multiple sources"""
+    def get_top_stories(self, limit=10):
+        """Fetch top stories from multiple sources with max 2 per source"""
         all_stories = []
         
         for source_name, rss_url in self.sources.items():
             try:
                 feed = feedparser.parse(rss_url)
-                for entry in feed.entries[:5]:  # Get up to 5 per source
+                for entry in feed.entries[:2]:  # Get max 2 per source
                     story = {
                         'title': entry.get('title', 'No title'),
                         'link': entry.get('link', '#'),

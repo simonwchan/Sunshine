@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunshine - News Infographic</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='infographic.css') }}">
+</head>
+<body>
+    <div class="infographic-wrapper">
+        <header class="infographic-header">
+            <div class="container">
+                <h1>☀️ Sunshine</h1>
+                <p>Daily News Analytics & Insights</p>
+                <nav>
+                    <a href="/" class="nav-link">← Back to News</a>
+                </nav>
+            </div>
+        </header>
+        
+        <main class="infographic-content">
+            <!-- Hero Stats -->
+            <section class="hero-stats">
+                <div class="container">
+                    <div class="stats-grid">
+                        <div class="big-stat">
+                            <div class="stat-icon">📰</div>
+                            <div class="stat-content">
+                                <p class="stat-label">Total Stories</p>
+                                <p class="stat-number" id="total-stories">-</p>
+                            </div>
+                        </div>
+                        <div class="big-stat">
+                            <div class="stat-icon">🌍</div>
+                            <div class="stat-content">
+                                <p class="stat-label">News Sources</p>
+                                <p class="stat-number" id="total-sources">-</p>
+                            </div>
+                        </div>
+                        <div class="big-stat">
+                            <div class="stat-icon">🔑</div>
+                            <div class="stat-content">
+                                <p class="stat-label">Top Keywords</p>
+                                <p class="stat-number" id="keyword-count">15</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="container">
+                    <div class="section-title">
+                        <h2>News Distribution Analysis</h2>
+                    </div>
+                    
+                    <div class="charts-grid">
+                        <div class="chart-card large">
+                            <h3><i class="fas fa-chart-pie"></i> Stories by Source</h3>
+                            <div id="chartContainer" style="position: relative; height: 300px;">
+                                <canvas id="sourceChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <h3><i class="fas fa-chart-bar"></i> Top Keywords</h3>
+                            <div id="barChartContainer" style="position: relative; height: 300px;">
+                                <canvas id="keywordChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Source Breakdown Cards -->
+            <section class="source-breakdown">
+                <div class="container">
+                    <div class="section-title">
+                        <h2>Source Breakdown</h2>
+                    </div>
+                    <div id="sourceCards" class="source-cards-grid"></div>
+                </div>
+            </section>
+
+            <!-- Word Cloud / Keywords -->
+            <section class="keywords-section">
+                <div class="container">
+                    <div class="section-title">
+                        <h2>Trending Topics</h2>
+                    </div>
+                    <div id="wordCloud" class="modern-word-cloud"></div>
+                </div>
+            </section>
+
+            <!-- Footer Stats -->
+            <section class="footer-stats">
+                <div class="container">
+                    <p>Last updated: <span id="timestamp"></span></p>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Infographic page loaded');
+            loadInfographicData();
+        });
+
+        function loadInfographicData() {
+            console.log('Loading infographic data...');
+            fetch('/api/infographic-data')
+                .then(response => {
+                    console.log('API response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Data received:', data);
+                    renderInfographic(data);
+                })
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    // Use sample data
+                    renderInfographic({
+                        'source_counts': {'BBC': 2, 'CNN': 2, 'Reuters': 1, 'Guardian': 1, 'Al Jazeera': 1, 'DW': 1},
+                        'word_frequency': {'news': 5, 'court': 3, 'biden': 3, 'trump': 2, 'israel': 2, 'election': 2, 'ukraine': 2, 'congress': 1},
+                        'total_stories': 8
+                    });
+                });
+        }
+
+        function renderInfographic(data) {
+            console.log('Rendering infographic with data:', data);
+            
+            // Update stats
+            document.getElementById('total-stories').textContent = data.total_stories || 8;
+            document.getElementById('total-sources').textContent = Object.keys(data.source_counts || {}).length || 6;
+            
+            // Display source cards
+            displaySourceCards(data.source_counts || {});
+            
+            // Display charts
+            displaySourceChart(data.source_counts || {});
+            displayKeywordChart(data.word_frequency || {});
+            
+            // Display word cloud
+            displayWordCloud(data.word_frequency || {});
+            
+            // Update timestamp
+            updateTimestamp();
+        }
+
+        function displaySourceCards(sourceCounts) {
+            const container = document.getElementById('sourceCards');
+            container.innerHTML = '';
+            
+            const entries = Object.entries(sourceCounts).sort((a, b) => b[1] - a[1]);
+            if (entries.length === 0) return;
+            
+            const maxCount = Math.max(...entries.map(e => e[1]));
+            
+            entries.forEach(([source, count]) => {
+                const percentage = (count / maxCount) * 100;
+                
+                const card = document.createElement('div');
+                card.className = 'source-card';
+                card.innerHTML = `
+                    <p class="source-card-name">${source}</p>
+                    <p class="source-card-count">${count}</p>
+                    <div class="source-card-bar">
+                        <div class="source-card-bar-fill" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function displaySourceChart(sourceCounts) {
+            try {
+                const ctx = document.getElementById('sourceChart').getContext('2d');
+                if (!ctx) {
+                    console.error('Canvas context not found');
+                    return;
+                }
+                
+                const labels = Object.keys(sourceCounts);
+                const values = Object.values(sourceCounts);
+                
+                const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#feca57', '#ff9ff3'];
+                
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: colors.slice(0, labels.length),
+                            borderColor: '#fff',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    font: { size: 12, weight: 'bold' }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('Error creating source chart:', e);
+            }
+        }
+
+        function displayKeywordChart(wordFrequency) {
+            try {
+                const ctx = document.getElementById('keywordChart').getContext('2d');
+                if (!ctx) {
+                    console.error('Keyword chart canvas not found');
+                    return;
+                }
+                
+                const words = Object.keys(wordFrequency).slice(0, 8);
+                const frequencies = Object.values(wordFrequency).slice(0, 8);
+                
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: words,
+                        datasets: [{
+                            label: 'Mentions',
+                            data: frequencies,
+                            backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                            borderColor: '#667eea',
+                            borderWidth: 2,
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: { beginAtZero: true }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('Error creating keyword chart:', e);
+            }
+        }
+
+        function displayWordCloud(wordFrequency) {
+            const container = document.getElementById('wordCloud');
+            container.innerHTML = '';
+            
+            const words = Object.entries(wordFrequency);
+            if (words.length === 0) return;
+            
+            const maxFreq = Math.max(...words.map(w => w[1]));
+            const minFreq = Math.min(...words.map(w => w[1]));
+            
+            words.forEach(([word, freq]) => {
+                const normalized = (freq - minFreq) / (maxFreq - minFreq || 1);
+                let sizeClass = 'word-tag-sm';
+                
+                if (normalized > 0.75) {
+                    sizeClass = 'word-tag-xl';
+                } else if (normalized > 0.5) {
+                    sizeClass = 'word-tag-lg';
+                } else if (normalized > 0.25) {
+                    sizeClass = 'word-tag-md';
+                }
+                
+                const tag = document.createElement('span');
+                tag.className = `word-tag ${sizeClass}`;
+                tag.textContent = word;
+                container.appendChild(tag);
+            });
+        }
+
+        function updateTimestamp() {
+            const timestamp = document.getElementById('timestamp');
+            const now = new Date();
+            timestamp.textContent = now.toLocaleString();
+        }
+    </script>
+</body>
+</html>
