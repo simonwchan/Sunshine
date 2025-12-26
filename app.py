@@ -1,3 +1,15 @@
+import os
+import sys
+
+# Allow enabling mock summary mode via command-line flag before importing news_fetcher.
+# Examples:
+#   python app.py --mock
+#   python app.py MOCK=1
+for a in sys.argv[1:]:
+    if a.lower() in ('--mock', '-m') or a.upper().startswith('MOCK='):
+        os.environ['MOCK_SUMMARY'] = '1'
+        break
+
 from flask import Flask, render_template, jsonify
 from news_fetcher import NewsAggregator
 from collections import Counter
@@ -14,7 +26,9 @@ def home():
     stories = news.get('stories') if isinstance(news, dict) else news
     summary = news.get('summary') if isinstance(news, dict) else ''
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    return render_template('index.html', stories=stories, summary=summary, timestamp=timestamp)
+    # Title changes when running in mock mode
+    app_title = 'Sunshine Mock' if os.getenv('MOCK_SUMMARY', '').lower() in ('1', 'true', 'yes') else '☀️ Sunshine'
+    return render_template('index.html', stories=stories, summary=summary, timestamp=timestamp, app_title=app_title)
 
 @app.route('/api/news')
 def get_news():
