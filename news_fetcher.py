@@ -6,11 +6,7 @@ import google.generativeai as genai
 import os
 
 # Configure Gemini API
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-
-# (no mock mode) configure normally from environment
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 class NewsAggregator:
     def __init__(self):
